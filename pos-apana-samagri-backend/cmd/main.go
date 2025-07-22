@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 
 	"pos-apana-samagri/internal/config"
+	"pos-apana-samagri/internal/handlers"
 	"pos-apana-samagri/internal/models"
 	"pos-apana-samagri/pkg/logger"
 )
@@ -42,6 +43,12 @@ func main() {
 	}
 
 	migrate(db)
+
+	transactionsHandler := handlers.NewTransactionHandler()
+
+	r.GET("/transactions", transactionsHandler.ListTransactions)
+	r.GET("/transactions/:id", transactionsHandler.GetTransaction)
+	r.POST("/transactions", transactionsHandler.CreateTransaction)
 
 	if err := r.Run(":" + port); err != nil {
 		logger.Error("Failed to start server", zap.Error(err))

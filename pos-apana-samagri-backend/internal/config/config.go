@@ -21,6 +21,8 @@ type ServerConfig struct {
 	Port string
 }
 
+var DB *gorm.DB
+
 type DatabaseConfig struct {
 	Host     string
 	Port     string
