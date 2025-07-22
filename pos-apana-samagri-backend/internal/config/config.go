@@ -1,6 +1,14 @@
 package config
 
-import "os"
+import (
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+)
 
 type Config struct {
 	Server   ServerConfig
@@ -9,6 +17,7 @@ type Config struct {
 }
 
 type ServerConfig struct {
+	Env  string
 	Port string
 }
 
@@ -21,13 +30,25 @@ type DatabaseConfig struct {
 	SSLMode  string
 }
 
+func (db *DatabaseConfig) Connect(config *gorm.Config) (*gorm.DB, error) {
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		db.Host, db.Port, db.User, db.Password, db.DBName, db.SSLMode)
+	return gorm.Open(postgres.Open(dsn), config)
+}
+
 type JWTConfig struct {
 	Secret string
 }
 
 func LoadConfig() *Config {
+	// Load .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Printf("Warning: Could not load .env file. Using system environment variables: %v", err)
+	}
 	return &Config{
 		Server: ServerConfig{
+			Env:  getEnv("ENV", "development"),
 			Port: getEnv("PORT", "8080"),
 		},
 		Database: DatabaseConfig{

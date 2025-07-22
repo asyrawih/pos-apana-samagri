@@ -1,32 +1,36 @@
 package main
 
 import (
-	"log"
-	"os"
+	"pos-apana-samagri/internal/config"
+	"pos-apana-samagri/internal/models"
+	"pos-apana-samagri/pkg/logger"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
+
+func migrate(db *gorm.DB) {
+	db.AutoMigrate(&models.Transaction{})
+}
 
 func main() {
 	r := gin.Default()
+	config := config.LoadConfig()
+	port := config.Server.Port
 
-	// Setup routes
-	setupRoutes(r)
+	logger.Info("Server starting on port %s", zap.String("port", port))
 
-	// Start server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	db, err := config.Database.Connect(&gorm.Config{})
+	if err != nil {
+		logger.Error("Failed to connect to database", zap.Error(err))
+		return
 	}
-	log.Printf("Server starting on port %s", port)
-	r.Run(":" + port)
-}
 
-func setupRoutes(r *gin.Engine) {
-	// Health check endpoint
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status": "ok",
-		})
-	})
+	migrate(db)
+
+	if err := r.Run(":" + port); err != nil {
+		logger.Error("Failed to start server", zap.Error(err))
+		return
+	}
 }
