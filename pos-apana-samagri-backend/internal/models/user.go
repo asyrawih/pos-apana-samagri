@@ -9,10 +9,29 @@ import (
 type UserRole string
 
 const (
-	AdminRole    UserRole = "admin"
-	CashierRole  UserRole = "cashier"
-	ManagerRole  UserRole = "manager"
+	AdminRole   UserRole = "admin"
+	CashierRole UserRole = "cashier"
+	ManagerRole UserRole = "manager"
 )
+
+// String returns the string representation of the role
+func (r UserRole) String() string {
+	return string(r)
+}
+
+// Valid checks if the role is valid
+func (r UserRole) Valid() bool {
+	switch r {
+	case AdminRole, CashierRole, ManagerRole:
+		return true
+	}
+	return false
+}
+
+// GormDataType implements the GORM data type interface
+func (UserRole) GormDataType() string {
+	return "varchar(20)"
+}
 
 type User struct {
 	gorm.Model
@@ -20,7 +39,7 @@ type User struct {
 	Password  string   `json:"-" gorm:"not null"`
 	FirstName string   `json:"first_name" gorm:"not null"`
 	LastName  string   `json:"last_name" gorm:"not null"`
-	Role      UserRole `json:"role" gorm:"type:user_role;default:'cashier'"`
+	Role      UserRole `json:"role" gorm:"type:varchar(20);default:'cashier';check:role IN ('admin', 'cashier', 'manager')"`
 	IsActive  bool     `json:"is_active" gorm:"default:true"`
 }
 
